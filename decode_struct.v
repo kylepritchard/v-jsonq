@@ -75,6 +75,7 @@ pub fn decode_struct[T](data []byte) T {
 			}
 		} $else $if field.typ is $map {
 			mut m := map[string]Value{}
+
 			// v_type := typeof(res.$(field.name).values())[2..]
 			if iterate_object_decode(mut m, r.value) != -1 {
 				match determine_type(typeof(field).name) {

@@ -75,7 +75,6 @@ fn get_(data []byte, keys ...string) ([]byte, ValueType, int, int, ErrorType) {
 }
 
 // //searchKeys
-
 fn search_keys(data []byte, keys ...string) int {
 	mut key_level := 0
 	mut level := 0
@@ -100,6 +99,7 @@ fn search_keys(data []byte, keys ...string) int {
 				key_begin := i
 
 				str_end, key_escaped := string_end(data[i..])
+
 				// println('string_end, ${str_end} - ${data[i..i + str_end].bytestr()}')
 				if str_end == -1 {
 					println('line 94')
@@ -108,6 +108,7 @@ fn search_keys(data []byte, keys ...string) int {
 				i += str_end
 				key_end := i - 1
 				value_offset := next_token(data[i..])
+
 				// println(value_offset)
 				if value_offset == -1 {
 					println('line 102')
@@ -165,6 +166,7 @@ fn search_keys(data []byte, keys ...string) int {
 			data[i] == `{` {
 				if !last_matched {
 					end := block_end(data[i..], `{`, `}`)
+
 					// println(' 160 block_end, ${end}')
 					if end == -1 {
 						println('line 156')
@@ -228,7 +230,6 @@ fn search_keys(data []byte, keys ...string) int {
 }
 
 // //next_token
-
 fn next_token(data []byte) int {
 	mut i := 0
 	for i < data.len {
@@ -244,7 +245,6 @@ fn next_token(data []byte) int {
 }
 
 // //get_type
-
 fn get_type(data []byte, offset int) ([]byte, ValueType, int, ErrorType) {
 	mut datatype := ValueType.unknown
 	mut endoffset := offset
@@ -260,6 +260,7 @@ fn get_type(data []byte, offset int) ([]byte, ValueType, int, ErrorType) {
 		}
 	} else if data[offset] == `[` { // if array value
 		datatype = .arr
+
 		// break label, for stopping nested loops
 		endoffset = block_end(data[offset..], `[`, `]`)
 
@@ -270,6 +271,7 @@ fn get_type(data []byte, offset int) ([]byte, ValueType, int, ErrorType) {
 		endoffset += offset
 	} else if data[offset] == `{` { // if object value
 		datatype = .obj
+
 		// break label, for stopping nested loops
 		endoffset = block_end(data[offset..], `{`, `}`)
 
@@ -388,7 +390,6 @@ fn unescape(i []byte, o [64]u8) ([]byte, bool) {
 }
 
 // token_end
-
 fn token_end(data []byte) int {
 	for i, c in data {
 		match true {
@@ -507,6 +508,7 @@ fn iterate_array(data []byte, cur_idx_rx int, a_idx int, cur_i int, keys ...stri
 					value_offset -= 2
 					value_found = data[(cur_i + value_offset)..(cur_i + value_offset + v.len + 2)]
 				}
+
 				// println('inside closure : ${value_found_ref[0]}')
 			}
 			cur_idx++
@@ -530,12 +532,12 @@ fn iterate_array(data []byte, cur_idx_rx int, a_idx int, cur_i int, keys ...stri
 		// 				// println('inside closure : ${value_found_ref[0]}')
 		// 				*curr_idx_ref++
 		// 			}
-
 		if e != .no_error {
 			break
 		}
 
 		skip_to_token := next_token(data[offset..])
+
 		// println('skip_to_token ===> ${skip_to_token}')
 		if skip_to_token == -1 {
 			return cur_idx, []byte{}, 0, ErrorType.malformed_array
@@ -583,9 +585,11 @@ fn main() {
 	   "deep_nest": {"a": {"b": {"c": 12345, "d": "str", "f":[1,2,3,4]}, "e": "str2"}}
 	}'
 	b := jsun.bytes()
+
 	// b := os.read_file('large-file.json')!.bytes()
 	mut sw := time.new_stopwatch()
 	_ := get(b, 'deep_nest', 'a', 'b', 'f', '[2]')
+
 	// res := get(b, 'float')
 	// 	'[1]')
 	// x, _, _, e := get(b, 'items', '[2]')
@@ -604,7 +608,6 @@ fn main() {
 	// println(z)
 	// num := z[1].int()
 	// println(num)
-
 	x := get(b, 'object_int').decode[Obj]()
 	println(sw.elapsed())
 	println(x)
