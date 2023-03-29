@@ -1,5 +1,7 @@
 module main
 
+import time
+
 pub fn (r Result) decode[T]() T {
 	if r.value.len != 0 {
 		$if T in [$int, $float] {
@@ -9,7 +11,12 @@ pub fn (r Result) decode[T]() T {
 		} $else $if T is $array {
 			$compile_error('Use decode_array() for array fields')
 		} $else $if T is $struct {
-			return decode_struct[T](r.value)
+			$if T is time.Time {
+				return r.decode_time()
+			} $else {
+				return decode_struct[T](r.value)
+			}
+
 			// panic('a struct ahhhhhhhhh!')
 		}
 	}
@@ -59,6 +66,49 @@ fn (r Result) process_numeric[T]() T {
 	return val
 }
 
+fn (r Result) decode_time() time.Time {
+	str := r.value.bytestr()
+	if t := time.parse(str) {
+		return t
+	} else if t := time.parse_iso8601(str) {
+		return t
+	} else if t := time.parse_rfc3339(str) {
+		return t
+	} else if t := time.parse_rfc2822(str) {
+		return t
+	}
+
+	return time.parse('1970-1-1 00:00:00') or { return time.now() }
+}
+
+// fn check_if_time(data []byte) bool {
+// 	mut sw := time.new_stopwatch()
+// 	str := data#[1..-1].bytestr()
+// 	if _ := time.parse(str) {
+// 		println(sw.elapsed())
+// 		return true
+// 	} else if _ := time.parse_iso8601(str) {
+// 		println(sw.elapsed())
+// 		return true
+// 	} else if _ := time.parse_rfc3339(str) {
+// 		println(sw.elapsed())
+// 		return true
+// 	} else if _ := time.parse_rfc2822(str) {
+// 		println(sw.elapsed())
+// 		return true
+// 	}
+// 	println(sw.elapsed())
+// 	return false
+
+// 	// time = time.parse_iso8601(str)
+// 	// return true
+
+// 	// != none || time.parse_iso8601(str) != none
+// 	// 	|| time.parse_rfc3339(str) != none || time.parse_rfc2822(str) != none {
+// 	// 	datatype = .time
+// 	// }
+// }
+
 // pub fn (r Result) decode_array() ([]Value, bool) {
 // 	mut ret := []Value{}
 // 	if iterate_array_decode(mut ret, r.value) == -1 {
@@ -93,7 +143,6 @@ fn (r Result) process_numeric[T]() T {
 // 	}
 // 	return val
 // }
-
 fn process_array[T](data []byte) T {
 	// println(data)
 	return T{}
@@ -182,6 +231,7 @@ fn iterate_array_decode(mut ret []Value, data []byte) int {
 				}
 				else {}
 			}
+
 			// cb(v, t, offset+o-len(v), e)
 		}
 

@@ -1,5 +1,7 @@
 module main
 
+import time
+
 pub union Number {
 	i8_  i8
 	i16_ i16
@@ -187,3 +189,43 @@ pub fn (v Value) bool() bool {
 		}
 	}
 }
+
+// to_time uses `Any` as a time.Time.
+// pub fn (v Value) to_time() !time.Time {
+// 	match v {
+// 		time.Time {
+// 			return v
+// 		}
+// 		i64 {
+// 			return time.unix(v)
+// 		}
+// 		string {
+// 			if v.len == 10 && v[4] == `-` && v[7] == `-` {
+// 				// just a date in the format `2001-01-01`
+// 				return time.parse_iso8601(v)!
+// 			}
+// 			is_rfc3339 := v.len == 24 && v[23] == `Z` && v[10] == `T`
+// 			if is_rfc3339 {
+// 				return time.parse_rfc3339(v)!
+// 			}
+// 			mut is_unix_timestamp := true
+// 			for c in v {
+// 				if c == `-` || (c >= `0` && c <= `9`) {
+// 					continue
+// 				}
+// 				is_unix_timestamp = false
+// 				break
+// 			}
+// 			if is_unix_timestamp {
+// 				return time.unix(v.i64())
+// 			}
+
+// 			// TODO - parse_iso8601
+// 			// TODO - parse_rfc2822
+// 			return time.parse(v)!
+// 		}
+// 		else {
+// 			return error('not a time value: ${v} of type: ${v.type_name()}')
+// 		}
+// 	}
+// }

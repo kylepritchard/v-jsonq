@@ -1,5 +1,7 @@
 module main
 
+import time
+
 pub fn decode_struct[T](data []byte) T {
 	mut res := T{}
 	$for field in T.fields {
@@ -26,6 +28,8 @@ pub fn decode_struct[T](data []byte) T {
 			res.$(field.name) = r.value.bytestr().bool()
 		} $else $if field.typ is []byte {
 			res.$(field.name) = r.value
+		} $else $if field.typ is time.Time {
+			res.$(field.name) = r.decode_time()
 		} $else $if field.typ is $array {
 			mut arr := []Value{}
 			if iterate_array_decode(mut arr, r.value) != -1 {

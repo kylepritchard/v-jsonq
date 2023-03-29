@@ -12,6 +12,7 @@ enum ValueType {
 	arr
 	boolean
 	null
+	time
 	unknown
 }
 
@@ -43,6 +44,15 @@ pub fn get(data []byte, keys ...string) Result {
 		offset: d
 		error: e
 	}
+}
+
+pub fn get_all(data []byte, queries [][]string) []Result {
+	mut results := []Result{}
+	for q in queries {
+		results << get(data, ...q)
+	}
+
+	return results
 }
 
 fn get_(data []byte, keys ...string) ([]byte, ValueType, int, int, ErrorType) {
@@ -258,6 +268,11 @@ fn get_type(data []byte, offset int) ([]byte, ValueType, int, ErrorType) {
 		} else {
 			return []byte{}, datatype, offset, ErrorType.malformed_string
 		}
+
+		// Check if times -- move to decoding
+		// if check_if_time(data[offset..endoffset]) {
+		// 	datatype = .time
+		// }
 	} else if data[offset] == `[` { // if array value
 		datatype = .arr
 
@@ -567,20 +582,22 @@ struct Obj {
 	c []int
 	d map[string]i8
 	e map[string]string
+	f time.Time
 }
 
 fn main() {
 	// s := os.read_file('../jsmn/canada.json')!
 	jsun := r'{
 	   "text": "Hello World!",
-	   "empty": false,
-	   "parse_time_nanoseconds": 127664,
+	   "boolean": false,
+	   "time": "2012-04-23T18:25:43.511Z",
+	   "date": "2023-03-29 11:12:00",
 	   "float": 12345.12345,
 	   "object": {"a": 1, "b": "string" "c":[1,2,3,4]},
 	   "array": [1,2,3,4,5,6,7],
 	   "string_array": ["a", "b", "c", null, false, [1,2,3]],
 	   "mixed_array": ["a", 1234, false, [1,2.65,"a",false, {"a": {"B" :"sexy", "C": [1,2,3]}}]]
-	   "object_int": {"a": 1, "b": 2, "c": [1,2,3], "d": {"a": 4, "b": 5}, "e": {"a": "a1", "b": "a2"}},
+	   "object_int": {"a": 1, "b": 2, "c": [1,2,3], "d": {"a": 4, "b": 5}, "e": {"a": "a1", "b": "a2"}, "f": "2023-03-29 11:12:00"},
 	   "object_mixed": {"a": "1", "b": 2},
 	   "deep_nest": {"a": {"b": {"c": 12345, "d": "str", "f":[1,2,3,4]}, "e": "str2"}}
 	}'
@@ -611,4 +628,17 @@ fn main() {
 	x := get(b, 'object_int').decode[Obj]()
 	println(sw.elapsed())
 	println(x)
+
+	a := get_all(b, [['text'], ['object', 'c', '[2]']])
+	println(a)
+	for each in a {
+		// println(each.value.bytestr())
+		println(each.decode[string]())
+	}
+
+	t := get(b, 'time').decode[time.Time]()
+	println(t)
+
+	d := get(b, 'date').decode[time.Time]()
+	println(d)
 }
