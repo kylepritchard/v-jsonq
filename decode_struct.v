@@ -9,21 +9,21 @@ pub fn decode_struct[T](data []byte) T {
 		$if field.typ is string {
 			res.$(field.name) = r.value.bytestr()
 		} $else $if field.typ is i8 {
-			res.$(field.name) = r.process_numeric[i8]()
+			res.$(field.name) = r.decode_number[i8]()
 		} $else $if field.typ is i16 {
-			res.$(field.name) = r.process_numeric[i16]()
+			res.$(field.name) = r.decode_number[i16]()
 		} $else $if field.typ is int {
-			res.$(field.name) = r.process_numeric[int]()
+			res.$(field.name) = r.decode_number[int]()
 		} $else $if field.typ is i64 {
-			res.$(field.name) = r.process_numeric[i64]()
+			res.$(field.name) = r.decode_number[i64]()
 		} $else $if field.typ is u8 {
-			res.$(field.name) = r.process_numeric[u8]()
+			res.$(field.name) = r.decode_number[u8]()
 		} $else $if field.typ is u16 {
-			res.$(field.name) = r.process_numeric[u16]()
+			res.$(field.name) = r.decode_number[u16]()
 		} $else $if field.typ is u32 {
-			res.$(field.name) = r.process_numeric[u32]()
+			res.$(field.name) = r.decode_number[u32]()
 		} $else $if field.typ is u64 {
-			res.$(field.name) = r.process_numeric[u64]()
+			res.$(field.name) = r.decode_number[u64]()
 		} $else $if field.typ is bool {
 			res.$(field.name) = r.value.bytestr().bool()
 		} $else $if field.typ is []byte {
@@ -70,6 +70,9 @@ pub fn decode_struct[T](data []byte) T {
 					'string' {
 						res.$(field.name) = arr.map(it as string)
 					}
+					'time.Time' {
+						res.$(field.name) = arr.map(decode_time(it as string))
+					}
 					else {
 						println('dunno what to do')
 					}
@@ -79,8 +82,6 @@ pub fn decode_struct[T](data []byte) T {
 			}
 		} $else $if field.typ is $map {
 			mut m := map[string]Value{}
-
-			// v_type := typeof(res.$(field.name).values())[2..]
 			if iterate_object_decode(mut m, r.value) != -1 {
 				match determine_type(typeof(field).name) {
 					'i8' {
@@ -164,6 +165,13 @@ pub fn decode_struct[T](data []byte) T {
 						mut nm := map[string]string{}
 						for k, v in m {
 							nm[k] = v as string
+						}
+						res.$(field.name) = nm.move()
+					}
+					'time.Time' {
+						mut nm := map[string]time.Time{}
+						for k, v in m {
+							nm[k] = decode_time(v as string)
 						}
 						res.$(field.name) = nm.move()
 					}

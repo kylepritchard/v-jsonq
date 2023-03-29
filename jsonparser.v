@@ -583,6 +583,7 @@ struct Obj {
 	d map[string]i8
 	e map[string]string
 	f time.Time
+	g []time.Time
 }
 
 fn main() {
@@ -597,10 +598,14 @@ fn main() {
 	   "array": [1,2,3,4,5,6,7],
 	   "string_array": ["a", "b", "c", null, false, [1,2,3]],
 	   "mixed_array": ["a", 1234, false, [1,2.65,"a",false, {"a": {"B" :"sexy", "C": [1,2,3]}}]]
-	   "object_int": {"a": 1, "b": 2, "c": [1,2,3], "d": {"a": 4, "b": 5}, "e": {"a": "a1", "b": "a2"}, "f": "2023-03-29 11:12:00"},
+	   "object_int": {"a": 1, "b": 2, "c": [1,2,3], "d": {"a": 4, "b": 5}, "e": {"a": "a1", "b": "a2"}, "f": "2023-03-29 11:12:00", "g":["2012-04-23T18:25:43.511Z",
+	"2012-04-23T18:25:43.511Z",	"2012-04-23T18:25:43.511Z"]
+	},
 	   "object_mixed": {"a": "1", "b": 2},
 	   "deep_nest": {"a": {"b": {"c": 12345, "d": "str", "f":[1,2,3,4]}, "e": "str2"}}
-	}'
+	   "time_arr": ["2012-04-23T18:25:43.511Z",
+"2012-04-23T18:25:43.511Z",	"2012-04-23T18:25:43.511Z"]
+}'
 	b := jsun.bytes()
 
 	// b := os.read_file('large-file.json')!.bytes()
