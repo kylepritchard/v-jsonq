@@ -1,40 +1,7 @@
-module main
+module vjsonq
 
-// hello there
 import os
 import time
-
-enum ValueType {
-	non_existant
-	str
-	num
-	obj
-	arr
-	boolean
-	null
-	time
-	unknown
-}
-
-enum ErrorType {
-	no_error
-	error
-	key_path_not_found
-	malformed_json
-	malformed_string
-	malformed_array
-	malformed_object
-	malformed_value
-	unknown_value
-	json
-}
-
-pub struct Result {
-	value  []byte
-	vtype  ValueType
-	offset int
-	error  ErrorType
-}
 
 pub fn get(data []byte, keys ...string) Result {
 	a, b, _, d, e := get_(data, ...keys)
@@ -44,15 +11,6 @@ pub fn get(data []byte, keys ...string) Result {
 		offset: d
 		error: e
 	}
-}
-
-pub fn get_all(data []byte, queries [][]string) []Result {
-	mut results := []Result{}
-	for q in queries {
-		results << get(data, ...q)
-	}
-
-	return results
 }
 
 fn get_(data []byte, keys ...string) ([]byte, ValueType, int, int, ErrorType) {
@@ -82,6 +40,15 @@ fn get_(data []byte, keys ...string) ([]byte, ValueType, int, int, ErrorType) {
 	}
 
 	return value[..value.len], datatype, offset, endoffset, ErrorType.no_error
+}
+
+pub fn get_all(data []byte, queries [][]string) []Result {
+	mut results := []Result{}
+	for q in queries {
+		results << get(data, ...q)
+	}
+
+	return results
 }
 
 // //searchKeys
@@ -268,11 +235,6 @@ fn get_type(data []byte, offset int) ([]byte, ValueType, int, ErrorType) {
 		} else {
 			return []byte{}, datatype, offset, ErrorType.malformed_string
 		}
-
-		// Check if times -- move to decoding
-		// if check_if_time(data[offset..endoffset]) {
-		// 	datatype = .time
-		// }
 	} else if data[offset] == `[` { // if array value
 		datatype = .arr
 
@@ -436,18 +398,6 @@ fn token_end(data []byte) int {
 // 	return 0
 // }
 
-// equal_str
-[inline]
-fn equal_str(b []byte, s string) bool {
-	// println(b.bytestr() == s)
-	return b.bytestr() == s
-}
-
-[inline]
-fn bytes_equal(a []byte, b []byte) bool {
-	return a == b
-}
-
 // cur_idx, value_found, value_offset := array_each(data[i..], cur_idx int)
 
 // ArrayEach is used when iterating arrays, accepts a callback function with the same return arguments as `Get`.
@@ -523,8 +473,6 @@ fn iterate_array(data []byte, cur_idx_rx int, a_idx int, cur_i int, keys ...stri
 					value_offset -= 2
 					value_found = data[(cur_i + value_offset)..(cur_i + value_offset + v.len + 2)]
 				}
-
-				// println('inside closure : ${value_found_ref[0]}')
 			}
 			cur_idx++
 		}
@@ -544,7 +492,6 @@ fn iterate_array(data []byte, cur_idx_rx int, a_idx int, cur_i int, keys ...stri
 		// 						}
 		// 					}
 		// 				}
-		// 				// println('inside closure : ${value_found_ref[0]}')
 		// 				*curr_idx_ref++
 		// 			}
 		if e != .no_error {
@@ -574,76 +521,4 @@ fn iterate_array(data []byte, cur_idx_rx int, a_idx int, cur_i int, keys ...stri
 	}
 
 	return cur_idx, value_found, value_offset, ErrorType.no_error
-}
-
-struct Obj {
-	a int
-	b int
-	c []int
-	d map[string]i8
-	e map[string]string
-	f time.Time
-	g []time.Time
-}
-
-fn main() {
-	// s := os.read_file('../jsmn/canada.json')!
-	jsun := r'{
-	   "text": "Hello World!",
-	   "boolean": false,
-	   "time": "2012-04-23T18:25:43.511Z",
-	   "date": "2023-03-29 11:12:00",
-	   "float": 12345.12345,
-	   "object": {"a": 1, "b": "string" "c":[1,2,3,4]},
-	   "array": [1,2,3,4,5,6,7],
-	   "string_array": ["a", "b", "c", null, false, [1,2,3]],
-	   "mixed_array": ["a", 1234, false, [1,2.65,"a",false, {"a": {"B" :"sexy", "C": [1,2,3]}}]]
-	   "object_int": {"a": 1, "b": 2, "c": [1,2,3], "d": {"a": 4, "b": 5}, "e": {"a": "a1", "b": "a2"}, "f": "2023-03-29 11:12:00", "g":["2012-04-23T18:25:43.511Z",
-	"2012-04-23T18:25:43.511Z",	"2012-04-23T18:25:43.511Z"]
-	},
-	   "object_mixed": {"a": "1", "b": 2},
-	   "deep_nest": {"a": {"b": {"c": 12345, "d": "str", "f":[1,2,3,4]}, "e": "str2"}}
-	   "time_arr": ["2012-04-23T18:25:43.511Z",
-"2012-04-23T18:25:43.511Z",	"2012-04-23T18:25:43.511Z"]
-}'
-	b := jsun.bytes()
-
-	// b := os.read_file('large-file.json')!.bytes()
-	mut sw := time.new_stopwatch()
-	_ := get(b, 'deep_nest', 'a', 'b', 'f', '[2]')
-
-	// res := get(b, 'float')
-	// 	'[1]')
-	// x, _, _, e := get(b, 'items', '[2]')
-	// println('time: ${sw.elapsed().microseconds()}us')
-	// println(res.decode[f64]())
-	// sw.restart()
-	// a, _ := get(b, 'text').decode[string]()
-
-	// println('time: ${sw.elapsed().microseconds()}us')
-	// println(a)
-	sw.restart()
-
-	// z, _ := get(b, 'mixed_array').decode_array()
-
-	// println('time: ${sw.elapsed().microseconds()}us')
-	// println(z)
-	// num := z[1].int()
-	// println(num)
-	x := get(b, 'object_int').decode[Obj]()
-	println(sw.elapsed())
-	println(x)
-
-	a := get_all(b, [['text'], ['object', 'c', '[2]']])
-	println(a)
-	for each in a {
-		// println(each.value.bytestr())
-		println(each.decode[string]())
-	}
-
-	t := get(b, 'time').decode[time.Time]()
-	println(t)
-
-	d := get(b, 'date').decode[time.Time]()
-	println(d)
 }

@@ -1,4 +1,4 @@
-module main
+module vjsonq
 
 // ObjectEach iterates over the key-value pairs of a JSON object, invoking a given callback for each such entry
 fn iterate_object_decode(mut m map[string]Value, data []byte) int {

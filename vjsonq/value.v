@@ -1,4 +1,4 @@
-module main
+module vjsonq
 
 import time
 

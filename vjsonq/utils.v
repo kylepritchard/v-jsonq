@@ -1,4 +1,4 @@
-module main
+module vjsonq
 
 const true_literal = 'true'.bytes()
 
@@ -90,3 +90,14 @@ const is_number = [false, false, false, false, false, false, false, false, false
 	false, false, false, false, false, false, false, false, false, false, false, false, false,
 	false, false, false, false, false, false, false, false, false, false, false, false, false,
 	false, false, false, false, false, false, false, false, false]!
+
+[inline]
+fn equal_str(b []byte, s string) bool {
+	// println(b.bytestr() == s)
+	return b.bytestr() == s
+}
+
+[inline]
+fn bytes_equal(a []byte, b []byte) bool {
+	return a == b
+}

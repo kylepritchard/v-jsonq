@@ -1,4 +1,4 @@
-module main
+module vjsonq
 
 pub fn (r Result) decode_array() ([]Value, bool) {
 	mut ret := []Value{}
