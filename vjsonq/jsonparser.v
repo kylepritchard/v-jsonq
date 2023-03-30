@@ -1,8 +1,5 @@
 module vjsonq
 
-import os
-import time
-
 pub fn get(data []byte, keys ...string) Result {
 	a, b, _, d, e := get_(data, ...keys)
 	return Result{

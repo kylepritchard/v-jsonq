@@ -1,7 +1,5 @@
 module vjsonq
 
-import time
-
 pub union Number {
 	i8_  i8
 	i16_ i16
