@@ -10,6 +10,7 @@ pub fn get(data []byte, keys ...string) Result {
 	}
 }
 
+[direct_array_access]
 fn get_(data []byte, keys ...string) ([]byte, ValueType, int, int, ErrorType) {
 	mut offset := 0
 	if keys.len > 0 {
@@ -49,6 +50,7 @@ pub fn get_all(data []byte, queries [][]string) []Result {
 }
 
 // //searchKeys
+[direct_array_access]
 fn search_keys(data []byte, keys ...string) int {
 	mut key_level := 0
 	mut level := 0
@@ -204,6 +206,7 @@ fn search_keys(data []byte, keys ...string) int {
 }
 
 // //next_token
+[direct_array_access]
 fn next_token(data []byte) int {
 	mut i := 0
 	for i < data.len {
@@ -219,6 +222,7 @@ fn next_token(data []byte) int {
 }
 
 // //get_type
+[direct_array_access]
 fn get_type(data []byte, offset int) ([]byte, ValueType, int, ErrorType) {
 	mut datatype := ValueType.unknown
 	mut endoffset := offset
@@ -296,7 +300,7 @@ fn get_type(data []byte, offset int) ([]byte, ValueType, int, ErrorType) {
 
 // Tries to find the end of string
 // Support if string contains escaped quote symbols.
-fn string_end(data []byte) (int, bool) {
+fn old_string_end(data []byte) (int, bool) {
 	mut escaped := false
 	for i, c in data {
 		if c == `"` {
@@ -323,9 +327,108 @@ fn string_end(data []byte) (int, bool) {
 	return -1, escaped
 }
 
+[direct_array_access]
+fn string_end(data []byte) (int, bool) {
+	mut escaped := false
+	mut i := 0
+	for {
+		for i < data.len - 7 {
+			// data_slice := data[i..i + 4]
+			if string_end[data[i]] {
+				unsafe {
+					goto tok
+				}
+			}
+			i++
+			if string_end[data[i]] {
+				unsafe {
+					goto tok
+				}
+			}
+			i++
+			if string_end[data[i]] {
+				unsafe {
+					goto tok
+				}
+			}
+			i++
+			if string_end[data[i]] {
+				unsafe {
+					goto tok
+				}
+			}
+			i++
+			if string_end[data[i]] {
+				unsafe {
+					goto tok
+				}
+			}
+			i++
+			if string_end[data[i]] {
+				unsafe {
+					goto tok
+				}
+			}
+			i++
+			if string_end[data[i]] {
+				unsafe {
+					goto tok
+				}
+			}
+			i++
+			if string_end[data[i]] {
+				unsafe {
+					goto tok
+				}
+			}
+			i++
+		}
+
+		// remaining
+		for i < data.len {
+			if string_end[data[i]] {
+				unsafe {
+					goto tok
+				}
+			}
+			i++
+		}
+
+		break
+
+		// goto
+		tok:
+		{
+			if data[i] == `"` {
+				// println('a quote')
+				if !escaped {
+					return i + 1, false
+				} else {
+					mut j := i - 1
+					for {
+						if j < 0 || data[j] != `\\` {
+							return i + 1, true // even number of backslashes
+						}
+						j--
+						if j < 0 || data[j] != `\\` {
+							break // odd number of backslashes
+						}
+						j--
+					}
+				}
+			} else if data[i] == `\\` {
+				escaped = true
+			}
+			i++
+		}
+	}
+
+	return -1, escaped
+}
+
 // Find end of the data structure, array or object.
 // For array openSym and closeSym will be '[' and ']', for object '{' and '}'
-fn block_end(data []byte, openSym byte, closeSym byte) int {
+fn old_block_end(data []byte, openSym byte, closeSym byte) int {
 	mut level := 0
 	mut i := 0
 	ln := data.len
@@ -358,13 +461,120 @@ fn block_end(data []byte, openSym byte, closeSym byte) int {
 	return -1
 }
 
+[direct_array_access]
+fn block_end(data []byte, openSym byte, closeSym byte) int {
+	// println(data.bytestr())
+	mut level := 0
+	mut i := 0
+
+	// ln := data.len
+	mut x := [256]bool{}
+	x[`"`] = true
+	if openSym == `{` {
+		x[`{`], x[`}`] = true, true
+	} else {
+		x[`[`], x[`]`] = true, true
+	}
+
+	for {
+		for i < data.len - 7 {
+			// block := data[i..i + 8]
+			if x[data[i]] {
+				unsafe {
+					goto check
+				}
+			}
+			i++
+			if x[data[i]] {
+				unsafe {
+					goto check
+				}
+			}
+			i++
+			if x[data[i]] {
+				unsafe {
+					goto check
+				}
+			}
+			i++
+			if x[data[i]] {
+				unsafe {
+					goto check
+				}
+			}
+			i++
+			if x[data[i]] {
+				unsafe {
+					goto check
+				}
+			}
+			i++
+			if x[data[i]] {
+				unsafe {
+					goto check
+				}
+			}
+			i++
+			if x[data[i]] {
+				unsafe {
+					goto check
+				}
+			}
+			i++
+			if x[data[i]] {
+				unsafe {
+					goto check
+				}
+			}
+			i++
+		}
+
+		// remaining
+		for i < data.len {
+			// println('loop: ${i}, ${ln}')
+			if x[data[i]] {
+				unsafe {
+					goto check
+				}
+			}
+			i++
+		}
+
+		// escape the main for loop
+		break
+
+		check:
+		{
+			// redo - returning zero
+			if data[i] == `"` { // If inside string, skip it
+				se, _ := string_end(data[i + 1..])
+				if se == -1 {
+					return -1
+				}
+				i += se
+			} else if data[i] == openSym { // If open symbol, increase level
+				level++
+			} else if data[i] == closeSym { // If close symbol, increase level
+				level--
+
+				// If we have returned to the original level, we're done
+				if level == 0 {
+					return i + 1
+				}
+			}
+			i++
+		}
+	}
+	return -1
+}
+
 // unescape
 fn unescape(i []byte, o [64]u8) ([]byte, bool) {
 	return []byte{}, false
 }
 
 // token_end
-fn token_end(data []byte) int {
+fn old_token_end(data []byte) int {
 	for i, c in data {
 		match true {
 			is_token_end[c] {
@@ -373,7 +583,58 @@ fn token_end(data []byte) int {
 			else {}
 		}
 	}
+	return data.len
+}
 
+[direct_array_access]
+fn token_end(data []byte) int {
+	mut i := 0
+
+	for {
+		for i < data.len - 7 {
+			if is_token_end[data[i]] {
+				return i
+			}
+			i++
+			if is_token_end[data[i]] {
+				return i
+			}
+			i++
+			if is_token_end[data[i]] {
+				return i
+			}
+			i++
+			if is_token_end[data[i]] {
+				return i
+			}
+			i++
+			if is_token_end[data[i]] {
+				return i
+			}
+			i++
+			if is_token_end[data[i]] {
+				return i
+			}
+			i++
+			if is_token_end[data[i]] {
+				return i
+			}
+			i++
+			if is_token_end[data[i]] {
+				return i
+			}
+			i++
+		}
+
+		for i < data.len {
+			if is_token_end[data[i]] {
+				return i
+			}
+			i++
+		}
+
+		break
+	}
 	return data.len
 }
 
@@ -398,6 +659,7 @@ fn token_end(data []byte) int {
 // cur_idx, value_found, value_offset := array_each(data[i..], cur_idx int)
 
 // ArrayEach is used when iterating arrays, accepts a callback function with the same return arguments as `Get`.
+[direct_array_access]
 fn iterate_array(data []byte, cur_idx_rx int, a_idx int, cur_i int, keys ...string) (int, []byte, int, ErrorType) {
 	mut cur_idx := cur_idx_rx
 	if data.len == 0 {

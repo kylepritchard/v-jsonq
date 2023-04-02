@@ -1,10 +1,11 @@
 module vjsonq
 
 pub struct Result {
-	value  []byte
-	vtype  ValueType
 	offset int
 	error  ErrorType
+pub:
+	value []byte
+	vtype ValueType
 }
 
 enum ValueType {

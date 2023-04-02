@@ -8,6 +8,7 @@ pub fn (r Result) decode_array() ([]Value, bool) {
 	return ret, true
 }
 
+[direct_array_access]
 fn iterate_array_decode(mut ret []Value, data []byte) int {
 	// println('iteratte array')
 	if data.len == 0 {
@@ -48,19 +49,23 @@ fn iterate_array_decode(mut ret []Value, data []byte) int {
 				.str {
 					ret << Value(v.bytestr())
 				}
+				// .num {
+				// 	if `.` in v {
+				// 		ret << Value(Number{
+				// 			f64_: v.bytestr().f64()
+				// 		})
+				// 	} else {
+				// 		ret << Value(Number{
+				// 			i64_: v.bytestr().i64()
+				// 		})
+				// 	}
+				// }
 				.num {
-					if `.` in v {
-						ret << Value(Number{
-							f64_: v.bytestr().f64()
-						})
-					} else {
-						ret << Value(Number{
-							i64_: v.bytestr().i64()
-						})
-					}
+					ret << Value(bytes_to_number(v))
 				}
 				.boolean {
-					ret << Value(v.bytestr().bool())
+					// ret << Value(v.bytestr().bool())
+					ret << Value(v[0] == `t`)
 				}
 				.null {
 					ret << Value(v.bytestr())
